@@ -11,6 +11,9 @@ ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" -p${SSH_PORT
 # Push docker-compose.yml file to host
 scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" -P${SSH_PORT} docker-compose.yml ${USER}@${INSTANCE}:~/projects/
 
+# Create external volume for sentry files
+ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" -p${SSH_PORT} ${USER}@${INSTANCE} 'docker volume create --name=sentry-data'
+
 # Run pulling the new images on the host
 ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile=/dev/null" -p${SSH_PORT} ${USER}@${INSTANCE} 'docker-compose -f ~/projects/docker-compose.yml pull'
 
