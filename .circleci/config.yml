@@ -1,0 +1,43 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    environment:
+      IMAGE_NGINX_NAME: user12/nginx_mainline
+      IMAGE_WEB_NAME: user12/sentry_web
+      IMAGE_CRON_NAME: user12/sentry_cron
+      IMAGE_WORKER_NAME: user12/sentry_worker
+    working_directory: ~/app
+    steps:
+      - checkout
+      - setup_remote_docker
+      - add_ssh_keys:
+          fingerprints:
+            - "75:80:fa:74:04:be:c0:50:da:2c:ba:45:5b:a2:09:0d"
+      - run:
+          name: Build Docker images
+          command: |
+            docker-compose build --pull
+      - run:
+          name: Push Docker Image
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push $IMAGE_WEB_NAME:$CIRCLE_SHA1
+            docker push $IMAGE_CRON_NAME:$CIRCLE_SHA1
+            docker push $IMAGE_WORKER_NAME:$CIRCLE_SHA1
+      - run:
+          name: Install envsubst
+          command: |
+            sudo apt-get update && sudo apt-get -y install gettext-base
+      - run:
+          name: Deploy Code
+          command: ./scripts/ci-deploy.sh
+workflows:
+  version: 2
+  build-master:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
