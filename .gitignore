@@ -1,3 +1,4 @@
+!nginx/ssl/
 nginx/ssl/*
 
 # Byte-compiled / optimized / DLL files
