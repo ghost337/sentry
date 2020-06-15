@@ -18,9 +18,9 @@ jobs:
       - run:
           name: Get default certificates from ENV
           command: |
-            echo "$DEFAULT_SSL_CERT" | base 64 -d > ./nginx/ssl/default.crt
-            echo "$DEFAULT_SSL_KEY" | base 64 -d > ./nginx/ssl/default.key
-            echo "$DH_4096" | base 64 -d > ./nginx/ssl/dhparam4096.pem
+            echo "$DEFAULT_SSL_CERT" | base64 -d > ./nginx/ssl/default.crt
+            echo "$DEFAULT_SSL_KEY" | base64 -d > ./nginx/ssl/default.key
+            echo "$DH_4096" | base64 -d > ./nginx/ssl/dhparam4096.pem
       - run:
           name: Build Docker images
           command: |
