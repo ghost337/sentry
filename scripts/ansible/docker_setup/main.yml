@@ -1,0 +1,64 @@
+---
+- hosts: VMs
+
+  tasks:
+  - shell: uname -s
+    ignore_errors: yes
+    register: uname_s
+
+  - shell: uname -m
+    ignore_errors: yes
+    register: uname_m
+
+  - shell: lsb_release -cs
+    ignore_errors: yes
+    register: lsb_release_cs
+
+  - name: Update apt cache
+    apt: update_cache=yes
+    become: yes
+
+  - name: Remove any existing docker packages
+    apt: name=docker* state=absent
+    become: yes
+
+  - name: Install required packages
+    apt:
+      name: "{{ DOCKER_PACKAGES }}"
+    become: yes
+
+  - name: Add an Apt signing key (docker gpg)
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    become: yes
+
+  - name: add apt_repository
+    apt_repository: repo="deb [arch=amd64] https://download.docker.com/linux/ubuntu {{lsb_release_cs.stdout}} stable" state=present
+    become: yes
+
+  - name: Update apt cache and install docker-ce
+    apt: update_cache=yes name=docker-ce state=latest
+    become: yes
+
+  - name: Enable docker service at startup
+    systemd: name=docker enabled=yes
+    become: yes
+
+  - name: Adding existing user {{ USER }} to Docker group
+    user: name={{ USER }} groups=docker append=yes
+    become: yes
+
+  - name: Install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/{{ DOCKER_COMPOSE_VERSION }}/docker-compose-{{ uname_s.stdout }}-{{ uname_m.stdout }}
+      dest: /usr/local/bin/docker-compose
+      mode: 0755
+    become: yes
+
+  - name: Install Ctop
+    get_url:
+      url: https://github.com/bcicen/ctop/releases/download/v{{ CTOP_VERSION }}/ctop-{{ CTOP_VERSION }}-linux-amd64
+      dest: "/usr/local/bin/ctop"
+      mode: 0755
+    become: yes

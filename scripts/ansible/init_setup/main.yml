@@ -1,0 +1,116 @@
+---
+- hosts: VMs
+# This playbook is needed that iptables_raw module be installed in library folder (see /etc/ansible/ansible.cfg).
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+  - name: Update apt cache
+    apt: update_cache=yes
+    become: yes
+
+  - name: Install required packages
+    apt:
+      name: "{{ PACKAGES }}"
+    become: yes
+
+  - name: set timezone to Europe/Kyiv
+    timezone:
+      name: Europe/Kiev
+    become: yes
+    become_method: sudo
+
+  - name: edit locale settings
+    lineinfile: dest=/etc/environment line='LC_ALL="en_US.UTF-8"'
+    become: yes
+
+  - name: add new user - {{USERNAME}}
+    user: name={{USERNAME}} password={{USERPASS_HASH}} shell=/bin/bash
+    become: yes
+
+  - name: authorized_keys creating
+    tags: ssh
+    authorized_key: user={{USERNAME}} key="{{ lookup('file', '{{CI_PUBKEY_PATH}}') }}"
+
+  - name: make possible passwordless run command execution for user - {{USERNAME}}
+    lineinfile: path="/etc/sudoers.d/{{USERNAME}}" owner=root group=root mode=0600 create=yes line='{{USERNAME}} ALL=(ALL) NOPASSWD:ALL' validate='/usr/sbin/visudo -cf %s'
+    become: yes
+
+#  - name: check if swap already exist
+#    command: [[ $(free -m | awk '/[Ss]wap/ {print $2}') -gt 0 ]]
+#    register: swap_status
+#    ignore_errors: True
+
+  - name: create swap file
+    command: fallocate -l {{SWAP_FILE_SIZE}} {{SWAP_FILE_PATH}}
+    when: ansible_swaptotal_mb < 1
+#    when: swap_status|failed
+    become: yes
+
+  - name: Change swap file permissions
+    file: path="{{SWAP_FILE_PATH}}" owner=root group=root mode=0600
+#    when: swap_status|failed
+    become: yes
+
+  - name: Check swap file type
+    command: file {{SWAP_FILE_PATH}}
+    register: swapfile
+#    when: swap_status|failed
+    become: yes
+
+  - name: Make swap file
+    command: mkswap {{SWAP_FILE_PATH}}
+    when: swapfile.stdout.find('swap file') == -1
+    become: yes
+
+  - name: Mount swap
+    command: swapon {{SWAP_FILE_PATH}}
+    when: ansible_swaptotal_mb < 1
+    become: yes
+
+  - name: Write swap entry in fstab
+    mount: name=none src={{SWAP_FILE_PATH}} fstype=swap opts=sw passno=0 dump=0 state=present
+    become: yes
+
+  - name: modify some swapiness and disable IPv6
+    become: yes
+    blockinfile:
+      path: "/etc/sysctl.conf"
+      block: |
+        vm.swappiness=10
+        vm.vfs_cache_pressure = 50
+        # IPv6 disabled
+        net.ipv6.conf.all.disable_ipv6 = 1
+        net.ipv6.conf.default.disable_ipv6 = 1
+        net.ipv6.conf.lo.disable_ipv6 = 1
+
+  - name: sysctl update
+    shell: sysctl -p
+    become: yes
+    tags:
+      - network
+
+  - name: update sshd_config (port change)
+    lineinfile: path="/etc/ssh/sshd_config" regexp="^Port" line="Port 45777"
+    become: yes
+
+  - name: update sshd_config (root login without-password)
+    lineinfile: path="/etc/ssh/sshd_config" regexp="^PermitRootLogin" line="PermitRootLogin without-password"
+    become: yes
+
+  - name: update sshd_config (access from keys only)
+    lineinfile: path="/etc/ssh/sshd_config" regexp="PasswordAuthentication" line="PasswordAuthentication no"
+    become: yes
+
+  - name: restart sshd
+    service: name=ssh state=restarted
+    become: yes
+
+  - name: capture name of main INTERFACE
+    shell: ip route | awk 'NR==1 {print $5}'
+    register: INTERFACE
+
+  - name: configure iptables
+    iptables_raw: name=iptables_default keep_unmanaged=no rules='{{IPTABLES_DEFAULT_HEAD}}'
+    become: yes

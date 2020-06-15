@@ -1,0 +1,18 @@
+---
+PACKAGES: "['ntp', 'vim', 'byobu', 'htop', 'rsync', 'iptables-persistent']"
+USERNAME: "ubuntu"
+USERPASS_HASH: "$6$TK7JRCq//$UxPhBOWjv5pCgpl8i/hQd291WlqsimA94HZN9bsuZlo6fUTcF7/nmFLw41E5/SP658eFtgewLOdy.pk1rcfeq."
+CI_PUBKEY_PATH: "./ci_rsa.pub"
+SWAP_FILE_SIZE: "2G"
+SWAP_FILE_PATH: "/swapfile"
+IPTABLES_DEFAULT_HEAD: |
+  -P INPUT ACCEPT
+  -P FORWARD ACCEPT
+  -P OUTPUT ACCEPT
+  -A INPUT -i {{INTERFACE.stdout}} -m state --state ESTABLISHED,RELATED -j ACCEPT
+  -A INPUT -i lo -j ACCEPT
+  -A INPUT -i {{INTERFACE.stdout}} -p icmp --icmp-type echo-request -j ACCEPT
+  -A OUTPUT -o {{INTERFACE.stdout}} -p icmp --icmp-type echo-reply -j ACCEPT
+  -A INPUT -i {{INTERFACE.stdout}} -p tcp -m tcp --dport 45777 -j ACCEPT
+  -P INPUT DROP
+  -P FORWARD DROP

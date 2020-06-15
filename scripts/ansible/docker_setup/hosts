@@ -1,0 +1,15 @@
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+ansible_user=ubuntu
+ansible_port=45777
+ansible_ssh_private_key_file=~/.ssh/ec2_keys.pem
+
+[VMs:vars]
+USER=ubuntu
+DOCKER_COMPOSE_VERSION=1.25.5
+CTOP_VERSION=0.7.3
+DOCKER_PACKAGES=['apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common']
+
+[VMs]
+vm1 ansible_host=3.125.120.50
