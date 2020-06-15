@@ -1,5 +1,5 @@
-!nginx/ssl/
 nginx/ssl/*
+!nginx/ssl/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

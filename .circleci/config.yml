@@ -29,6 +29,7 @@ jobs:
           name: Push Docker Image
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push $IMAGE_NGINX_NAME:$CIRCLE_SHA1
             docker push $IMAGE_WEB_NAME:$CIRCLE_SHA1
             docker push $IMAGE_CRON_NAME:$CIRCLE_SHA1
             docker push $IMAGE_WORKER_NAME:$CIRCLE_SHA1
