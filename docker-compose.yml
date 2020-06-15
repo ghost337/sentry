@@ -33,8 +33,6 @@ services:
   web:
     <<: *defaults
     image: $IMAGE_WEB_NAME:$CIRCLE_SHA1
-    ports:
-      - '80:9000/tcp'
     networks:
       - front
       - back
@@ -53,24 +51,19 @@ services:
     networks:
       - back
 
-#  nginx:
-#    <<: *restart_policy
-#    image: $IMAGE_NGINX_NAME:$CIRCLE_SHA1
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.nginx
-#    ports:
-#      - '80:80/tcp'
-#      - '443:443/tcp'
-#    volumes:
-#      - type: bind
-#        read_only: true
-#        source: ./nginx/ssl
-#        target: /etc/nginx/ssl
-#    depends_on:
-#      - web
-#    networks:
-#      - front
+  nginx:
+    <<: *restart_policy
+    image: $IMAGE_NGINX_NAME:$CIRCLE_SHA1
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - '80:80/tcp'
+      - '443:443/tcp'
+    depends_on:
+      - web
+    networks:
+      - front
 
 volumes:
     sentry-data:
