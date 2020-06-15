@@ -21,6 +21,8 @@ jobs:
             echo "$DEFAULT_SSL_CERT" | base64 -d > ./nginx/ssl/default.crt
             echo "$DEFAULT_SSL_KEY" | base64 -d > ./nginx/ssl/default.key
             echo "$DH_4096" | base64 -d > ./nginx/ssl/dhparam4096.pem
+            echo "$DOMAIN_SSL_CERT" | base64 -d > ./nginx/ssl/domain.crt
+            echo "$DOMAIN_SSL_KEY" | base64 -d > ./nginx/ssl/domain.key
       - run:
           name: Build Docker images
           command: |
