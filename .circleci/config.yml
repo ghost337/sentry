@@ -16,6 +16,12 @@ jobs:
           fingerprints:
             - "75:80:fa:74:04:be:c0:50:da:2c:ba:45:5b:a2:09:0d"
       - run:
+          name: Get default certificates from ENV
+          command: |
+            echo "$DEFAULT_SSL_CERT" > ./nginx/ssl/default.crt
+            echo "$DEFAULT_SSL_KEY" > ./nginx/ssl/default.key
+            echo "$DH_4096" > ./nginx/ssl/dhparam4096.pem
+      - run:
           name: Build Docker images
           command: |
             docker-compose build --pull
